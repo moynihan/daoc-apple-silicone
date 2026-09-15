@@ -17,8 +17,9 @@
 set -u
 setopt NULL_GLOB
 
-WINE_URL="https://github.com/Gcenx/macOS_Wine_builds/releases/download/11.0_1/wine-stable-11.0_1-osx64.tar.xz"
-WINE_SHA256="b50dc50ec7f41d58b115a6b685d4d1315ba3c797bd3aa0f49213f2703cb82388"
+WINE_URL="https://github.com/Gcenx/macOS_Wine_builds/releases/download/11.17/wine-devel-11.17-osx64.tar.xz"
+WINE_VERSION="wine-11.17"   # Wine 11.0 stable has a WinHTTP race that hangs/crashes the DAoC patcher
+WINE_SHA256="c2b3a8274dbc594deaa64e40469b607cbc4aa8ef5656dec4c5f6f3dac0da770c"
 
 BASE="${DAOC_HOME:-$HOME/Applications/Dark Age of Camelot}"
 WINE_DIR="$BASE/wine"
@@ -58,10 +59,12 @@ else
 fi
 
 # ---------------------------------------------------------------- 2. Wine
-WINE_BIN="$WINE_DIR/Wine Stable.app/Contents/Resources/wine/bin"
-if [[ -x "$WINE_BIN/wine" ]] && "$WINE_BIN/wine" --version >/dev/null 2>&1; then
-  ok "Wine already installed ($("$WINE_BIN/wine" --version))"
+WINE_BIN="$WINE_DIR/Wine Devel.app/Contents/Resources/wine/bin"
+have=$("$WINE_BIN/wine" --version 2>/dev/null || "$WINE_DIR/Wine Stable.app/Contents/Resources/wine/bin/wine" --version 2>/dev/null)
+if [[ "$have" == "$WINE_VERSION" ]]; then
+  ok "Wine already installed ($have)"
 else
+  [[ -n "$have" ]] && say "Replacing Wine $have with $WINE_VERSION..."
   say "Downloading Wine (about 180 MB)..."
   tmp="$BASE/wine.tar.xz"
   curl -fL --progress-bar -o "$tmp" "$WINE_URL" || die "Wine download failed. Check your internet connection."
@@ -74,8 +77,8 @@ else
   tar -xJf "$tmp" -C "$WINE_DIR" || die "Could not unpack Wine."
   rm -f "$tmp"
   xattr -dr com.apple.quarantine "$WINE_DIR" 2>/dev/null || true
-  "$WINE_BIN/wine" --version >/dev/null 2>&1 || die "Wine does not start on this Mac."
-  ok "Wine installed ($("$WINE_BIN/wine" --version))"
+  [[ "$("$WINE_BIN/wine" --version 2>/dev/null)" == "$WINE_VERSION" ]] || die "Wine does not start on this Mac."
+  ok "Wine installed ($WINE_VERSION)"
 fi
 export PATH="$WINE_BIN:$PATH"
 
@@ -123,30 +126,48 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>13.0</string>
 </dict></plist>
 PLIST
-cat > "$APP/Contents/MacOS/launch" <<LAUNCH
+cat > "$APP/Contents/MacOS/launch" <<'LAUNCH'
 #!/bin/zsh
 # Starts the DAoC patcher; press Play in it once it says 100%.
-export WINEPREFIX="$WINEPREFIX"
+#
+# The EA patcher fetches its manifest through WinHTTP in async mode and, under
+# Wine, that step is a race: sometimes it page-faults, sometimes it hangs at
+# "Retrieving manifest files", usually it works. Each launch is watched via the
+# patcher's own log; a crash, a hang, or an early exit triggers a relaunch.
+export WINEPREFIX="@@WINEPREFIX@@"
 export WINEDEBUG=-all
 export WINEDLLOVERRIDES="winemenubuilder.exe=d"
-export PATH="$WINE_BIN:\$PATH"
+export PATH="@@WINE_BIN@@:$PATH"
+GAME="@@GAME@@"
+LOG="@@BASE@@/wine.log"
+setopt NULL_GLOB
 cd "$GAME" || exit 1
-LOG="$BASE/wine.log"
-: > "\$LOG"
-# The EA patcher sometimes dies a few seconds after its self-update on the
-# first run in a fresh prefix (page fault in camelot.bin). A relaunch always
-# works, so start it, give it 20 s, and start again if it is gone.
-for attempt in 1 2 3; do
-  wine camelot.exe >> "\$LOG" 2>&1 &
-  sleep 20
-  if pgrep -x camelot.bin >/dev/null || pgrep -x camelot.exe >/dev/null; then
-    exit 0
-  fi
-  echo "patcher exited early (attempt \$attempt), relaunching" >> "\$LOG"
-  wineserver -k 2>/dev/null; sleep 2
+: > "$LOG"
+plog() { cat "$GAME"/logs/*.Log 2>/dev/null; }
+for attempt in $(seq 1 8); do
+  pbefore=$(plog | wc -l | tr -d ' ')
+  wine camelot.exe >> "$LOG" 2>&1 &
+  t0=$(date +%s); tnp=0; verdict=""
+  while (( $(date +%s) - t0 < 150 )); do
+    sleep 3
+    new=$(plog | tail -n +$((pbefore + 1)))
+    # only look at lines after the patcher's own self-update restart
+    after=$(printf '%s\n' "$new" | awk '/Nothing to patch for \[EAMythic Patcher\]/{buf=""; seen=1; next} seen{buf=buf $0 "\n"} END{printf "%s", buf}')
+    if printf '%s' "$after" | grep -qE "Patch size is|Nothing to patch for \[DAoC Live\]|Patch Operation Complete"; then verdict=ok; break; fi
+    if grep -q "page fault" "$LOG"; then verdict=crash; break; fi
+    if (( tnp == 0 )) && printf '%s' "$new" | grep -q "Nothing to patch for \[EAMythic Patcher\]"; then tnp=$(date +%s); fi
+    if (( tnp > 0 && $(date +%s) - tnp > 45 )); then verdict=hang; break; fi
+    if (( $(date +%s) - t0 > 25 )) && ! pgrep -x camelot.bin >/dev/null && ! pgrep -x camelot.exe >/dev/null; then verdict=exited; break; fi
+  done
+  [[ -z "$verdict" ]] && verdict=timeout
+  echo "launch attempt $attempt: $verdict" >> "$LOG"
+  [[ "$verdict" == ok ]] && exit 0
+  wineserver -k 2>/dev/null; sleep 3; : > "$LOG"
 done
+echo "giving up after 8 attempts" >> "$LOG"
 exit 1
 LAUNCH
+sed -i '' -e "s|@@WINEPREFIX@@|$WINEPREFIX|g" -e "s|@@WINE_BIN@@|$WINE_BIN|g" -e "s|@@GAME@@|$GAME|g" -e "s|@@BASE@@|$BASE|g" "$APP/Contents/MacOS/launch"
 chmod +x "$APP/Contents/MacOS/launch"
 [[ -f "$PAYLOAD/daoc.icns" ]] && cp "$PAYLOAD/daoc.icns" "$APP/Contents/Resources/daoc.icns"
 touch "$APP"

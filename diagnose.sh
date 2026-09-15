@@ -15,7 +15,7 @@ h "Mac"; sw_vers; uname -m; sysctl -n machdep.cpu.brand_string
 h "Rosetta"; /usr/bin/arch -x86_64 /usr/bin/true && echo "ok" || echo "MISSING"
 h "Disk free"; df -h "$HOME" | tail -1
 h "Install folder"; ls -la "$BASE" 2>&1
-h "Wine"; "$BASE/wine/Wine Stable.app/Contents/Resources/wine/bin/wine" --version 2>&1
+h "Wine"; for a in "Wine Devel" "Wine Stable"; do [[ -x "$BASE/wine/$a.app/Contents/Resources/wine/bin/wine" ]] && "$BASE/wine/$a.app/Contents/Resources/wine/bin/wine" --version 2>&1; done
 h "Game folder size / key files"; du -sh "$GAME" 2>&1; ls -la "$GAME"/camelot.exe "$GAME"/camelot.bin "$GAME"/game.dll "$GAME"/login.dll "$GAME"/mft.myp 2>&1
 h "Running Wine processes"; ps -eo pid,etime,pcpu,rss,comm | grep -iE "camelot|login.dll|game.dll|wine" | grep -v grep
 h "Patch server reachability (needs HTTP on port 1380)"

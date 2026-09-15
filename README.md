@@ -52,10 +52,13 @@ helping you:
 curl -fsSL https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/diagnose.sh | zsh
 ```
 
-Stuck at **0 % "Retrieving manifest files"**: the patcher cannot reach the
-patch server, which is plain HTTP on port 1380. Turn off any VPN, ad-blocker
-or "security" app, and try again; the diagnostics file shows whether that
-server is reachable from your network.
+Stuck at **0 % "Retrieving manifest files"** or the patcher vanishes: with
+Wine 11.0 the EA patcher's async WinHTTP requests sometimes deadlock or
+page-fault at that step (roughly half of fresh runs in testing). The installer
+now ships Wine 11.17, which passed 8/8 fresh runs, and the launcher watches the
+patcher's log and relaunches it on a crash, hang, or early exit (up to 8
+times). If you installed before this change, just rerun the install line; it
+swaps Wine in place and keeps your game files.
 
 Everything lives in `~/Applications/Dark Age of Camelot/`. To uninstall,
 drag that folder and the **Dark Age of Camelot** app to the Trash. If
@@ -102,7 +105,7 @@ make clean     # remove scratch wine/ and prefix/ folders
 3. Pressing Play runs `login.dll` (the login client), which launches `game.dll`
    (32-bit, DirectX 9).
 
-Wine: WineHQ's own macOS build of Wine 11 stable, downloaded from
+Wine: WineHQ's own macOS build of Wine 11.17 (devel branch), downloaded from
 [Gcenx/macOS_Wine_builds](https://github.com/Gcenx/macOS_Wine_builds) and
 installed privately (Homebrew disabled its WineHQ casks on 2026-09-01 over a
 Gatekeeper check). Default 64-bit prefix (Wine 11's WoW64 mode runs the
