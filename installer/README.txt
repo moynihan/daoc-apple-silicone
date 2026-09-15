@@ -3,7 +3,7 @@ Dark Age of Camelot on your Mac (Apple Silicon)
 
 1. Right-click "Install DAoC.command" and choose Open.
    (The first time, macOS asks if you are sure because the file came
-   from a friend rather than the App Store. Click Open.)
+   from the internet rather than the App Store. Click Open.)
 
 2. A Terminal window shows progress. It may ask for your Mac password
    once, to install Apple's Rosetta.
@@ -19,7 +19,7 @@ Dark Age of Camelot on your Mac (Apple Silicon)
 4. From then on, open "Dark Age of Camelot" from your Applications
    folder (the one inside your home folder: Finder > Go > Home > Applications).
 
-Problems? Send your friend the file
+If something goes wrong, the log file is:
    ~/Applications/Dark Age of Camelot/wine.log
 
 Everything is installed inside ~/Applications/Dark Age of Camelot/.

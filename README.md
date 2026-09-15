@@ -8,13 +8,13 @@ Whisky, Homebrew, or a Windows VM.
 
 | Path | Purpose |
 |------|---------|
-| `installer/Install DAoC.command` | One-click installer to send to a friend (see `installer/README.txt`) |
+| `installer/Install DAoC.command` | One-click installer anyone can run (see `installer/README.txt`) |
 | `installer/payload/` | The two bootstrap files from the official `DAoCSetup.exe` (patcher + patch config) and an app icon |
 | `DAoCSetup.exe` | The official installer, unchanged (SHA-256 `89785e16…bedd9`, identical to the current download) |
 | `env.sh`, `play.sh` | Dev/test harness that runs the game from a Wine prefix inside this folder |
 | `wine/`, `prefix/` | Scratch Wine install + prefix used while working this out (safe to delete) |
 
-Your playable install lives in `~/Applications/Dark Age of Camelot/` and is
+The playable install lives in `~/Applications/Dark Age of Camelot/` and is
 launched with `~/Applications/Dark Age of Camelot.app`.
 
 ## How it works
