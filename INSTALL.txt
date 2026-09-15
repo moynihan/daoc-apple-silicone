@@ -1,9 +1,15 @@
 Dark Age of Camelot on your Mac (Apple Silicon)
 ================================================
 
-1. Right-click "Install DAoC.command" and choose Open.
-   (The first time, macOS asks if you are sure because the file came
-   from the internet rather than the App Store. Click Open.)
+1. Double-click "Install DAoC.command".
+
+   If macOS says it can't be opened or "cannot verify" it:
+   open System Settings > Privacy & Security, scroll down, click
+   "Open Anyway", then double-click the file again.
+
+   (Alternative with no security dialogs: open Terminal, paste this
+   line, press Return:
+   curl -fsSL https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/install.sh | zsh )
 
 2. A Terminal window shows progress. It may ask for your Mac password
    once, to install Apple's Rosetta.
@@ -14,13 +20,12 @@ Dark Age of Camelot on your Mac (Apple Silicon)
    https://accounts.eamythic.com/ )
 
    If the game closes itself the very first time you press Play, just
-   open it again and log in — the second launch works.
+   open it again and log in. The second launch works.
 
 4. From then on, open "Dark Age of Camelot" from your Applications
    folder (the one inside your home folder: Finder > Go > Home > Applications).
 
-If something goes wrong, the log file is:
-   ~/Applications/Dark Age of Camelot/wine.log
-
 Everything is installed inside ~/Applications/Dark Age of Camelot/.
 To uninstall, drag that folder and the "Dark Age of Camelot" app to the Trash.
+If something goes wrong, the log file is:
+   ~/Applications/Dark Age of Camelot/wine.log

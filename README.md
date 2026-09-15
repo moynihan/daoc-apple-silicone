@@ -1,57 +1,102 @@
-# Dark Age of Camelot on Apple Silicon
+# Dark Age of Camelot on Apple Silicon Macs
 
-Runs the official Broadsword DAoC client (32-bit, DirectX 9) on an Apple
-Silicon Mac using WineHQ's macOS build of Wine 11, without CrossOver,
-Whisky, Homebrew, or a Windows VM.
+Play the official (Broadsword) Dark Age of Camelot client on an M1/M2/M3/M4
+Mac. No CrossOver, no Parallels, no Homebrew. One install step, then a normal
+Mac app you double-click.
 
-## What's here
+## Install (pick one)
+
+### A. Paste one line into Terminal
+
+1. Open **Terminal** (press ⌘-Space, type `Terminal`, press Return).
+2. Paste this line and press Return:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/install.sh | zsh
+```
+
+3. It may ask for your Mac password once (to install Apple's Rosetta).
+   Wait until it says **Done**.
+
+### B. Download and double-click
+
+1. Download **DAoC-Mac-Installer.zip** from the
+   [Releases page](https://github.com/moynihan/daoc-apple-silicone/releases/latest)
+   and open it (Safari usually unzips it for you).
+2. Double-click **Install DAoC.command**.
+3. If macOS says it "can't be opened" or "cannot verify" it: open
+   **System Settings → Privacy & Security**, scroll down, click **Open Anyway**,
+   then double-click the file again. (Newer macOS versions do this for
+   anything not from the App Store.)
+
+## Then play
+
+1. The DAoC patcher window appears and downloads the game (about 4.5 GB,
+   5–30 minutes depending on your internet). Leave it alone until the
+   top-left corner says **100%**.
+2. Press **Play** and log in. No account yet? Free "Endless Conquest"
+   accounts: <https://accounts.eamythic.com/>
+3. **If the game closes itself the very first time you press Play**, open
+   it again and log in. The second launch works.
+4. From now on, open **Dark Age of Camelot** in your home folder's
+   Applications folder (Finder → Go → Home → Applications). Want it in the
+   Dock? Drag it there.
+
+Everything lives in `~/Applications/Dark Age of Camelot/`. To uninstall,
+drag that folder and the **Dark Age of Camelot** app to the Trash. If
+something goes wrong, the log file is `~/Applications/Dark Age of Camelot/wine.log`.
+
+## Requirements
+
+* Apple Silicon Mac (M1 or newer), macOS 13 or newer.
+* About 7 GB of free disk space.
+* A DAoC account (free Endless Conquest or subscription).
+
+Verified on macOS 26.5: patcher, login client, and the 3D game client all run,
+rendering at full resolution.
+
+---
+
+## For developers
+
+```bash
+make install   # same as the one-liner, from this checkout
+make zip       # build DAoC-Mac-Installer.zip (what the Releases page serves)
+make release   # tag + publish the zip to GitHub Releases (needs gh)
+make clean     # remove scratch wine/ and prefix/ folders
+```
 
 | Path | Purpose |
 |------|---------|
-| `installer/Install DAoC.command` | One-click installer anyone can run (see `installer/README.txt`) |
-| `installer/payload/` | The two bootstrap files from the official `DAoCSetup.exe` (patcher + patch config) and an app icon |
-| `DAoCSetup.exe` | The official installer, unchanged (SHA-256 `89785e16…bedd9`, identical to the current download) |
-| `env.sh`, `play.sh` | Dev/test harness that runs the game from a Wine prefix inside this folder |
-| `wine/`, `prefix/` | Scratch Wine install + prefix used while working this out (safe to delete) |
+| `install.sh` | The installer. Idempotent; safe to re-run. `DAOC_HOME`, `DAOC_APP`, `DAOC_NO_LAUNCH` env vars override paths / skip the final launch (used for testing) |
+| `Install DAoC.command` | Double-click wrapper around `install.sh` (falls back to fetching it) |
+| `payload/` | The two bootstrap files from the official `DAoCSetup.exe` (patcher + patch config) and an app icon |
+| `INSTALL.txt` | Plain-text instructions shipped inside the zip |
+| `env.sh`, `play.sh` | Dev harness that runs the game from a Wine prefix inside this folder |
 
-The playable install lives in `~/Applications/Dark Age of Camelot/` and is
-launched with `~/Applications/Dark Age of Camelot.app`.
+### How it works
 
-## How it works
-
-1. `DAoCSetup.exe` is a WinRAR self-extractor around an NSIS `setup.exe`.
-   All it really does is copy `camelot.exe` (the EA Mythic patcher) and
-   `patch.cfg` into `Program Files (x86)\Electronic Arts\Dark Age of Camelot`
-   and install DirectX 9 redistributables (unneeded under Wine). Its silent
-   mode doesn't work under Wine, so the installer copies those two files itself.
+1. `DAoCSetup.exe` (the official installer, SHA-256 `89785e16…bedd9`) is a
+   WinRAR self-extractor around an NSIS `setup.exe`. All it really does is copy
+   `camelot.exe` (the EA Mythic patcher) and `patch.cfg` into
+   `Program Files (x86)\Electronic Arts\Dark Age of Camelot` and install
+   DirectX 9 redistributables (unneeded under Wine). Its silent mode doesn't
+   work under Wine, so the installer copies those two files itself.
 2. `camelot.exe` self-updates, then downloads the game (~4.4 GB) from
    `patch.daoc.eamythic.com`. That server is still live in 2026.
-3. Pressing Play runs `login.dll` (the login client), which launches `game.dll`.
+3. Pressing Play runs `login.dll` (the login client), which launches `game.dll`
+   (32-bit, DirectX 9).
 
-Wine settings that matter: default 64-bit prefix (Wine 11's WoW64 mode runs
-the 32-bit client; `WINEARCH=win32` is not supported), Windows version set
-to 7, crash dialog disabled, `winemenubuilder` disabled so Wine doesn't
-create stray shortcuts. Rendering uses Wine's built-in wined3d (D3D9 → OpenGL).
+Wine: WineHQ's own macOS build of Wine 11 stable, downloaded from
+[Gcenx/macOS_Wine_builds](https://github.com/Gcenx/macOS_Wine_builds) and
+installed privately (Homebrew disabled its WineHQ casks on 2026-09-01 over a
+Gatekeeper check). Default 64-bit prefix (Wine 11's WoW64 mode runs the
+32-bit client; `WINEARCH=win32` is not supported). Windows version set to 7,
+crash dialog disabled, `winemenubuilder` disabled. Rendering is Wine's
+built-in wined3d (D3D9 → OpenGL); no winetricks needed.
 
-## Verified
-
-Patcher, login client and the 3D client (`game.dll`, character select at
-1920×1200, wined3d/OpenGL) all run on an Apple Silicon Mac with macOS 26.5.
-Known quirk: the first Play after a fresh patch may crash the client; the
-second launch works. Wine output goes to `~/Applications/Dark Age of Camelot/wine.log`.
-
-## If the 3D client ever misbehaves
+### If the 3D client ever misbehaves
 
 DXVK-macOS does not ship a D3D9 DLL, so the Vulkan/Metal fallbacks are
 [Sikarugir](https://github.com/Sikarugir-App/Sikarugir) (free, bundles D9VK)
 or CrossOver with DXVK enabled.
-
-Reports from Eden (a DAoC freeshard) users: CrossOver 22/23 on M2/M3 crashed
-on camera movement or after loading NPCs; Parallels and VMware Fusion worked.
-
-## Why Homebrew's `wine-stable` failed
-
-Homebrew disabled every WineHQ cask on 2026-09-01 because the packages don't
-pass its Gatekeeper check. The tarball from WineHQ's own GitHub releases is
-the same build; the installer downloads it directly and clears the
-quarantine attribute.

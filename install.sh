@@ -1,6 +1,11 @@
 #!/bin/zsh
 # Dark Age of Camelot installer for Apple Silicon Macs.
-# Double-click this file. It sets up everything needed to play DAoC on a Mac:
+#
+# Run it either way:
+#   curl -fsSL https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/install.sh | zsh
+# or double-click "Install DAoC.command" from the downloaded zip.
+#
+# It sets up everything needed to play DAoC on a Mac:
 #   1. Rosetta 2 (Apple's Intel translator, needed by Wine)
 #   2. Wine 11 (runs Windows programs), installed privately under
 #      ~/Applications/Dark Age of Camelot/  -- nothing system-wide is touched
@@ -20,14 +25,16 @@ WINE_DIR="$BASE/wine"
 export WINEPREFIX="$BASE/prefix"
 export WINEDEBUG=-all
 export WINEDLLOVERRIDES="winemenubuilder.exe=d"   # don't spam ~/Applications with Wine shortcuts
-PAYLOAD="$(cd "$(dirname "$0")" && pwd)/payload"
+PAYLOAD_URL="https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/payload"
+PAYLOAD="$(cd "$(dirname "$0")" 2>/dev/null && pwd)/payload"
+[[ -f "$PAYLOAD/camelot.exe" ]] || PAYLOAD="$BASE/payload"
 GAME="$WINEPREFIX/drive_c/Program Files (x86)/Electronic Arts/Dark Age of Camelot"
 APP="${DAOC_APP:-$HOME/Applications/Dark Age of Camelot.app}"
 LOG="$BASE/install.log"
 
 say()  { print -P "%F{cyan}==>%f $*"; }
 ok()   { print -P "%F{green}  ✓%f $*"; }
-die()  { print -P "%F{red}ERROR:%f $*"; echo; echo "Details are in: $LOG"; echo "Press Return to close."; read -r; exit 1; }
+die()  { print -P "%F{red}ERROR:%f $*"; echo; echo "Details are in: $LOG"; echo "Press Return to close."; read -r </dev/tty 2>/dev/null; exit 1; }
 
 mkdir -p "$BASE" || die "Cannot create $BASE"
 exec > >(tee -a "$LOG") 2>&1
@@ -88,7 +95,13 @@ fi
 if [[ -f "$GAME/camelot.exe" && -f "$GAME/patch.cfg" ]]; then
   ok "DAoC patcher already in place"
 else
-  [[ -f "$PAYLOAD/camelot.exe" && -f "$PAYLOAD/patch.cfg" ]] || die "The 'payload' folder is missing next to this installer."
+  if [[ ! -f "$PAYLOAD/camelot.exe" || ! -f "$PAYLOAD/patch.cfg" ]]; then
+    say "Downloading the DAoC patcher..."
+    mkdir -p "$PAYLOAD"
+    for f in camelot.exe patch.cfg daoc.icns; do
+      curl -fsSL -o "$PAYLOAD/$f" "$PAYLOAD_URL/$f" || die "Could not download $f."
+    done
+  fi
   mkdir -p "$GAME" && cp "$PAYLOAD/camelot.exe" "$PAYLOAD/patch.cfg" "$GAME/" || die "Could not copy the patcher."
   ok "DAoC patcher installed"
 fi

@@ -7,8 +7,9 @@ prefix/
 # the two files the repo needs from it are in installer/payload/)
 DAoCSetup.exe
 
-# Build artifact: `zip -r DAoC-Mac-Installer.zip installer`
+# Build artifact: `make zip`
 DAoC-Mac-Installer.zip
+build/
 
 # Local tooling state
 .claude/settings.local.json
