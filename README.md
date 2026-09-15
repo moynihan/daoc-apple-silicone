@@ -42,6 +42,21 @@ curl -fsSL https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/i
    Applications folder (Finder → Go → Home → Applications). Want it in the
    Dock? Drag it there.
 
+### Something not working?
+
+Paste this line into Terminal. It writes `DAoC-diagnostics.txt` to your
+Desktop (no passwords or account names in it); send that file to whoever is
+helping you:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/diagnose.sh | zsh
+```
+
+Stuck at **0 % "Retrieving manifest files"**: the patcher cannot reach the
+patch server, which is plain HTTP on port 1380. Turn off any VPN, ad-blocker
+or "security" app, and try again; the diagnostics file shows whether that
+server is reachable from your network.
+
 Everything lives in `~/Applications/Dark Age of Camelot/`. To uninstall,
 drag that folder and the **Dark Age of Camelot** app to the Trash. If
 something goes wrong, the log file is `~/Applications/Dark Age of Camelot/wine.log`.
