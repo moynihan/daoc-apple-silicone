@@ -1,0 +1,16 @@
+# Scratch Wine install and prefix used while developing (hundreds of MB / 5+ GB;
+# the installer downloads Wine and the game itself)
+wine/
+prefix/
+
+# Official DAoC installer (14 MB, download from darkageofcamelot.com/download;
+# the two files the repo needs from it are in installer/payload/)
+DAoCSetup.exe
+
+# Build artifact: `zip -r DAoC-Mac-Installer.zip installer`
+DAoC-Mac-Installer.zip
+
+# Local tooling state
+.claude/settings.local.json
+.DS_Store
+*.log
