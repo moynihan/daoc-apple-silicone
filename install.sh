@@ -133,7 +133,19 @@ export PATH="$WINE_BIN:\$PATH"
 cd "$GAME" || exit 1
 LOG="$BASE/wine.log"
 : > "\$LOG"
-exec wine camelot.exe >> "\$LOG" 2>&1
+# The EA patcher sometimes dies a few seconds after its self-update on the
+# first run in a fresh prefix (page fault in camelot.bin). A relaunch always
+# works, so start it, give it 20 s, and start again if it is gone.
+for attempt in 1 2 3; do
+  wine camelot.exe >> "\$LOG" 2>&1 &
+  sleep 20
+  if pgrep -x camelot.bin >/dev/null || pgrep -x camelot.exe >/dev/null; then
+    exit 0
+  fi
+  echo "patcher exited early (attempt \$attempt), relaunching" >> "\$LOG"
+  wineserver -k 2>/dev/null; sleep 2
+done
+exit 1
 LAUNCH
 chmod +x "$APP/Contents/MacOS/launch"
 [[ -f "$PAYLOAD/daoc.icns" ]] && cp "$PAYLOAD/daoc.icns" "$APP/Contents/Resources/daoc.icns"
@@ -144,7 +156,6 @@ ok "App created: $APP"
 echo
 say "Starting the DAoC patcher. It downloads the game (about 4.5 GB) —"
 say "leave it alone until the top-left corner says 100%%, then press Play."
-say "If the game quits the first time you press Play, open it again — the second launch works."
 say "After that, just open 'Dark Age of Camelot' from ~/Applications to play."
 echo
 if [[ -z "${DAOC_NO_LAUNCH:-}" ]]; then

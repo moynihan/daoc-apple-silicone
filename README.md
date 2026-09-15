@@ -36,8 +36,8 @@ curl -fsSL https://raw.githubusercontent.com/moynihan/daoc-apple-silicone/main/i
    top-left corner says **100%**.
 2. Press **Play** and log in. No account yet? Free "Endless Conquest"
    accounts: <https://accounts.eamythic.com/>
-3. **If the game closes itself the very first time you press Play**, open
-   it again and log in. The second launch works.
+3. If the game ever closes itself right after you press Play, open it
+   again and log in. (The launcher already retries the patcher for you.)
 4. From now on, open **Dark Age of Camelot** in your home folder's
    Applications folder (Finder → Go → Home → Applications). Want it in the
    Dock? Drag it there.

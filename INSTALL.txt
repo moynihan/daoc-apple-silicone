@@ -19,8 +19,8 @@ Dark Age of Camelot on your Mac (Apple Silicon)
    your DAoC account. (Free "Endless Conquest" accounts:
    https://accounts.eamythic.com/ )
 
-   If the game closes itself the very first time you press Play, just
-   open it again and log in. The second launch works.
+   If the game ever closes itself right after you press Play, just
+   open it again and log in.
 
 4. From then on, open "Dark Age of Camelot" from your Applications
    folder (the one inside your home folder: Finder > Go > Home > Applications).
